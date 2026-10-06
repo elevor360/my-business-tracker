@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png">
+<title>Elevore360D Listing Manager</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><img src="elevore360d-logo.jpg"><div><h1>Elevore360D Listing Manager</h1><p>Customers • Businesses • Listings • Payments • Invoices</p></div></header>
+<div id="installBar" hidden><b>Install Listing Manager on this computer</b><button id="installBtn">Install App</button><button id="installClose">×</button></div>
+<nav>
+<button data-page="dashboard" class="active">Dashboard</button>
+<button data-page="records">Customers & Businesses</button>
+<button data-page="payments">Payments</button>
+<button data-page="invoices">Invoices</button>
+<button data-page="backup">Backup</button>
+</nav>
+<main>
+<section id="dashboard" class="page active">
+<h2>Dashboard</h2><div class="stats">
+<div><b id="sBusinesses">0</b><span>Businesses</span></div>
+<div><b id="sActive">0</b><span>Active Listings</span></div>
+<div><b id="sDue">£0.00</b><span>Outstanding</span></div>
+<div><b id="sOverdue">0</b><span>Overdue</span></div></div>
+<h3>Upcoming / overdue listings</h3><div id="dueList" class="tablewrap"></div>
+</section>
+
+<section id="records" class="page">
+<div class="headrow"><h2>Customers & Businesses</h2><button id="newRecord">+ Add Business</button></div>
+<input id="recordSearch" class="search" placeholder="Search business, contact or email…">
+<div class="split"><aside id="recordList"></aside>
+<form id="recordForm">
+<input type="hidden" id="recordId">
+<div class="grid">
+<label>Business name<input id="businessName" required></label>
+<label>Contact/customer name<input id="contactName"></label>
+<label>Email<input id="email" type="email"></label>
+<label>Phone<input id="phone"></label>
+<label class="wide">Address<textarea id="address"></textarea></label>
+<label>Listing package<input id="packageName" value="Local Deals Listing"></label>
+<label>Listing price (£)<input id="listingPrice" type="number" step="0.01" min="0"></label>
+<label>Start date<input id="startDate" type="date"></label>
+<label>Renewal / expiry<input id="renewalDate" type="date"></label>
+<label>Status<select id="listingStatus"><option>Active</option><option>Pending</option><option>Expired</option><option>Cancelled</option></select></label>
+<label>Payment method<select id="paymentMethod"><option>Bank Transfer</option><option>Cash</option><option>Card</option><option>PayPal</option><option>Other</option></select></label>
+<label class="wide">Notes<textarea id="notes"></textarea></label>
+</div>
+<div class="actions"><button type="submit">Save Record</button><button type="button" id="deleteRecord" class="danger">Delete</button></div>
+</form></div>
+</section>
+
+<section id="payments" class="page">
+<div class="headrow"><h2>Payments</h2><button id="addPayment">+ Record Payment</button></div>
+<div id="paymentTable" class="tablewrap"></div>
+<dialog id="paymentDialog"><form method="dialog" id="paymentForm">
+<h3>Record Payment</h3>
+<label>Business<select id="payBusiness"></select></label>
+<label>Amount (£)<input id="payAmount" type="number" step="0.01" min="0" required></label>
+<label>Date<input id="payDate" type="date" required></label>
+<label>Method<select id="payMethod"><option>Bank Transfer</option><option>Cash</option><option>Card</option><option>PayPal</option><option>Other</option></select></label>
+<label>Reference<input id="payReference"></label>
+<label>Status<select id="payStatus"><option>Paid</option><option>Pending</option><option>Refunded</option></select></label>
+<div class="actions"><button value="cancel">Cancel</button><button id="savePayment" value="default">Save Payment</button></div>
+</form></dialog>
+</section>
+
+<section id="invoices" class="page">
+<div class="headrow"><h2>Invoices</h2><button id="newInvoice">+ Create Invoice</button></div>
+<div id="invoiceTable" class="tablewrap"></div>
+<dialog id="invoiceDialog"><form method="dialog" id="invoiceForm">
+<h3>Create Invoice</h3>
+<label>Business<select id="invBusiness"></select></label>
+<label>Description<input id="invDescription" value="Elevore360D Local Deals listing"></label>
+<label>Amount (£)<input id="invAmount" type="number" step="0.01" min="0" required></label>
+<label>Invoice date<input id="invDate" type="date" required></label>
+<label>Due date<input id="invDue" type="date" required></label>
+<div class="actions"><button value="cancel">Cancel</button><button id="saveInvoice" value="default">Create Invoice</button></div>
+</form></dialog>
+<div id="printArea"></div>
+</section>
+
+<section id="backup" class="page">
+<h2>Backup & Restore</h2>
+<p>All records are stored on this device. Make regular backups, especially before changing computers.</p>
+<div class="backupBtns"><button id="exportBackup">Download Backup</button><label class="fileBtn">Restore Backup<input id="importBackup" type="file" accept=".json"></label></div>
+<h3>Important payment security</h3><p>This app records payment status, method, amount and reference only. Do not enter card numbers, CVV codes, bank passwords or other sensitive payment credentials.</p>
+</section>
+</main>
+<footer>Elevore360D Listing Manager V1 • Private owner administration app</footer>
+<script src="app.js"></script><script src="install.js"></script>
+</body></html>
