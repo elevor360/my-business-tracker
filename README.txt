@@ -1,24 +1,22 @@
-ELEVORE360D LISTING MANAGER V2
+ELEVORE360D LISTING MANAGER V3
 ===============================
-V2 builds on the working V1 and keeps the same local database so existing V1 records can continue on the same hosted site/browser.
+V3 builds on the stable V2. Existing V1/V2 local records are retained when upgrading on the same hosted site/browser because the same local database key is used.
 
-NEW IN V2
-- Renewal reminders for listings due within 30 days
-- Warning for active listings already past renewal/expiry
-- Invoice status: Unpaid / Overdue / Paid
-- Mark Invoice Paid button
-- Marking an invoice paid automatically adds the payment to the payment log
-- Revenue Reports page
-- Total paid and pending totals
-- Current month and current year revenue
-- Monthly revenue table
-- Listing status report
-- Print/PDF invoice button (use your browser Print dialog and choose Save as PDF)
-- Existing prepared Email Invoice feature retained
-- Existing business records, payment tracking, backup/restore and installable PWA retained
+NEW IN V3
+- One-click renewal reminder email preparation
+- One-click renewal invoice creation
+- Customer statements showing invoices, payments and running balance
+- Print / Save PDF customer statements
+- Business invoice/payment history via statements
+- Payments CSV export
+- Invoices CSV export
+- Businesses/listings CSV export including balance
+- V2 Paid / Unpaid / Overdue invoice controls retained
+- V2 renewal warnings and revenue reports retained
+- Backup/restore retained
 
-SECURITY
-Do not enter card numbers, CVV codes, bank passwords or email passwords.
+EMAIL
+Email Reminder and Email Invoice open your device's configured email program with the message prepared. V3 does not store an email password or silently send mail.
 
-IMPORTANT
-Keep V1 ZIP as your backup. Before upgrading a live V1 installation, use V1's Download Backup button.
+UPGRADE SAFETY
+Keep your V2 ZIP. Before replacing live V2 files, use Download Backup once.

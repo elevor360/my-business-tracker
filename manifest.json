@@ -1,7 +1,7 @@
 {
-  "name": "Elevore360D Listing Manager V2",
+  "name": "Elevore360D Listing Manager V3",
   "short_name": "Listing Manager",
-  "id": "./listing-manager-v2",
+  "id": "./listing-manager-v3",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

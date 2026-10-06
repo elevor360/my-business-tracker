@@ -16,7 +16,7 @@ function renderDashboard(){
  db.records.forEach(r=>{const due=Math.max(0,Number(r.listingPrice||0)-paidBy(r.id));outstanding+=due;if(due>0&&r.renewalDate&&r.renewalDate<today)overdue++});
  $('#sDue').textContent=money(outstanding);$('#sOverdue').textContent=overdue;
  const rows=db.records.filter(r=>r.renewalDate).sort((a,b)=>a.renewalDate.localeCompare(b.renewalDate)).slice(0,10);
- $('#dueList').innerHTML=rows.length?`<table><tr><th>Business</th><th>Status</th><th>Renewal / expiry</th><th>Price</th></tr>${rows.map(r=>`<tr><td>${esc(r.businessName)}</td><td>${esc(r.listingStatus)}</td><td>${r.renewalDate}</td><td>${money(r.listingPrice)}</td></tr>`).join('')}</table>`:'No listing dates entered yet.';
+ $('#dueList').innerHTML=rows.length?`<table><tr><th>Business</th><th>Status</th><th>Renewal / expiry</th><th>Price</th><th>Renewal</th></tr>${rows.map(r=>`<tr><td>${esc(r.businessName)}</td><td>${esc(r.listingStatus)}</td><td>${r.renewalDate}</td><td>${money(r.listingPrice)}</td><td><button onclick="renewalEmail('${r.id}')">Email Reminder</button> <button onclick="renewalInvoice('${r.id}')">Create Invoice</button></td></tr>`).join('')}</table>`:'No listing dates entered yet.';
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function renderRecords(){
@@ -30,7 +30,7 @@ function editRecord(id){const r=db.records.find(x=>x.id===id);if(!r)return;Objec
 $('#newRecord').onclick=blankRecord;$('#recordSearch').oninput=renderRecords;
 $('#recordForm').onsubmit=e=>{e.preventDefault();let id=$('#recordId').value||crypto.randomUUID();const r={id};['businessName','contactName','email','phone','address','packageName','listingPrice','startDate','renewalDate','listingStatus','paymentMethod','notes'].forEach(k=>r[k]=$('#'+k).value);const i=db.records.findIndex(x=>x.id===id);if(i>=0)db.records[i]=r;else db.records.push(r);$('#recordId').value=id;save()};
 $('#deleteRecord').onclick=()=>{const id=$('#recordId').value;if(id&&confirm('Delete this business record?')){db.records=db.records.filter(r=>r.id!==id);save();blankRecord()}};
-function fillSelects(){const opts=db.records.map(r=>`<option value="${r.id}">${esc(r.businessName)}</option>`).join('');$('#payBusiness').innerHTML=opts;$('#invBusiness').innerHTML=opts}
+function fillSelects(){const opts=db.records.map(r=>`<option value="${r.id}">${esc(r.businessName)}</option>`).join('');$('#payBusiness').innerHTML=opts;$('#invBusiness').innerHTML=opts;$('#statementBusiness').innerHTML=opts}
 function renderPayments(){$('#paymentTable').innerHTML=db.payments.length?`<table><tr><th>Date</th><th>Business</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th></tr>${[...db.payments].reverse().map(p=>{let r=db.records.find(x=>x.id===p.recordId);return `<tr><td>${p.date}</td><td>${esc(r?.businessName||'Deleted')}</td><td>${money(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.reference)}</td><td>${esc(p.status)}</td></tr>`}).join('')}</table>`:'No payments recorded.'}
 $('#addPayment').onclick=()=>{if(!db.records.length)return alert('Add a business first.');$('#payDate').value=new Date().toISOString().slice(0,10);$('#paymentDialog').showModal()};
 $('#paymentForm').onsubmit=e=>{if(e.submitter?.value==='cancel')return;db.payments.push({id:crypto.randomUUID(),recordId:$('#payBusiness').value,amount:$('#payAmount').value,date:$('#payDate').value,method:$('#payMethod').value,reference:$('#payReference').value,status:$('#payStatus').value});save()};
@@ -57,5 +57,62 @@ function renderReports(){
  const counts={};db.records.forEach(r=>counts[r.listingStatus]=(counts[r.listingStatus]||0)+1);
  $('#statusReport').innerHTML=`<table><tr><th>Status</th><th>Listings</th></tr>${['Active','Pending','Expired','Cancelled'].map(s=>`<tr><td>${s}</td><td>${counts[s]||0}</td></tr>`).join('')}</table>`;
 }
+
+
+window.renewalEmail=id=>{
+ const r=db.records.find(x=>x.id===id); if(!r)return;
+ const subject=encodeURIComponent('Elevore360D Local Deals listing renewal');
+ const body=encodeURIComponent(`Hello ${r.contactName||''},
+
+Your Elevore360D Local Deals listing is due for renewal on ${r.renewalDate||'the renewal date'}.
+
+Business: ${r.businessName}
+Listing: ${r.packageName||'Local Deals Listing'}
+Renewal price: ${money(r.listingPrice)}
+
+Please reply to confirm your renewal.
+
+Thank you,
+Elevore360D`);
+ location.href=`mailto:${encodeURIComponent(r.email||'')}?subject=${subject}&body=${body}`;
+};
+window.renewalInvoice=id=>{
+ const r=db.records.find(x=>x.id===id);if(!r)return;
+ const d=new Date(), due=new Date();due.setDate(due.getDate()+14);
+ const inv={id:crypto.randomUUID(),number:'E360-'+db.nextInvoice++,recordId:r.id,description:`${r.packageName||'Elevore360D Local Deals listing'} renewal`,amount:r.listingPrice||0,date:d.toISOString().slice(0,10),due:due.toISOString().slice(0,10),status:'Unpaid'};
+ db.invoices.push(inv);save();alert(`Invoice ${inv.number} created for ${r.businessName}.`);
+};
+
+function businessBalance(id){
+ const inv=db.invoices.filter(i=>i.recordId===id).reduce((n,i)=>n+Number(i.amount||0),0);
+ const paid=db.payments.filter(p=>p.recordId===id&&p.status==='Paid').reduce((n,p)=>n+Number(p.amount||0),0);
+ return inv-paid;
+}
+function renderStatement(){
+ const id=$('#statementBusiness').value,r=db.records.find(x=>x.id===id);
+ if(!r){$('#statementArea').innerHTML='Add a business first.';return}
+ const inv=db.invoices.filter(i=>i.recordId===id),pay=db.payments.filter(p=>p.recordId===id&&p.status==='Paid');
+ const tx=[
+   ...inv.map(i=>({date:i.date,type:`Invoice ${i.number}`,debit:Number(i.amount||0),credit:0})),
+   ...pay.map(p=>({date:p.date,type:`Payment ${p.reference||''}`,debit:0,credit:Number(p.amount||0)}))
+ ].sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+ let bal=0;
+ const rows=tx.map(t=>{bal+=t.debit-t.credit;return `<tr><td>${t.date||''}</td><td>${esc(t.type)}</td><td>${t.debit?money(t.debit):''}</td><td>${t.credit?money(t.credit):''}</td><td>${money(bal)}</td></tr>`}).join('');
+ $('#statementArea').innerHTML=`<div id="statementPrint"><h2>Elevore360D Customer Statement</h2><h3>${esc(r.businessName)}</h3><p>${esc(r.contactName||'')}<br>${esc(r.address||'').replace(/\n/g,'<br>')}<br>${esc(r.email||'')}</p><table><tr><th>Date</th><th>Details</th><th>Invoice</th><th>Payment</th><th>Balance</th></tr>${rows}</table><h3>Balance: ${money(bal)}</h3></div>`;
+}
+$('#viewStatement').onclick=renderStatement;
+$('#printStatement').onclick=()=>{renderStatement();window.print()};
+
+function csvDownload(name,rows){
+ if(!rows.length)return alert('There is no data to export.');
+ const keys=Object.keys(rows[0]);
+ const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+ const csv=[keys.map(q).join(','),...rows.map(r=>keys.map(k=>q(r[k])).join(','))].join('\r\n');
+ const u=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),x=document.createElement('a');
+ x.href=u;x.download=name;x.click();URL.revokeObjectURL(u);
+}
+$('#exportPaymentsCsv').onclick=()=>csvDownload('elevore360d-payments.csv',db.payments.map(p=>{let r=db.records.find(x=>x.id===p.recordId);return {date:p.date,business:r?.businessName||'',amount:p.amount,method:p.method,reference:p.reference,status:p.status}}));
+$('#exportInvoicesCsv').onclick=()=>csvDownload('elevore360d-invoices.csv',db.invoices.map(i=>{let r=db.records.find(x=>x.id===i.recordId);return {invoice:i.number,business:r?.businessName||'',date:i.date,due:i.due,description:i.description,amount:i.amount,status:invoiceStatus(i)}}));
+$('#exportBusinessesCsv').onclick=()=>csvDownload('elevore360d-businesses.csv',db.records.map(r=>({business:r.businessName,contact:r.contactName,email:r.email,phone:r.phone,package:r.packageName,price:r.listingPrice,start:r.startDate,renewal:r.renewalDate,status:r.listingStatus,balance:businessBalance(r.id)})));
 
 blankRecord();renderAll();
