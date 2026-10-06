@@ -1,25 +1,24 @@
-ELEVORE360D LISTING MANAGER V1
+ELEVORE360D LISTING MANAGER V2
 ===============================
-A completely separate private owner app. It does not alter your working Local Deals Customer or Owner apps.
+V2 builds on the working V1 and keeps the same local database so existing V1 records can continue on the same hosted site/browser.
 
-FEATURES
-- Customer/business database
-- Listing package, price, dates and status
-- Payment log: amount, method, reference and status
-- Dashboard for active listings, outstanding amounts and overdue records
-- Automatic invoice numbers
-- Printable invoices
-- Email Invoice button: opens your computer/phone's configured email app with a prepared invoice email
-- Search
-- Backup and restore
-- Installable PWA
+NEW IN V2
+- Renewal reminders for listings due within 30 days
+- Warning for active listings already past renewal/expiry
+- Invoice status: Unpaid / Overdue / Paid
+- Mark Invoice Paid button
+- Marking an invoice paid automatically adds the payment to the payment log
+- Revenue Reports page
+- Total paid and pending totals
+- Current month and current year revenue
+- Monthly revenue table
+- Listing status report
+- Print/PDF invoice button (use your browser Print dialog and choose Save as PDF)
+- Existing prepared Email Invoice feature retained
+- Existing business records, payment tracking, backup/restore and installable PWA retained
+
+SECURITY
+Do not enter card numbers, CVV codes, bank passwords or email passwords.
 
 IMPORTANT
-Data is stored locally in the browser/device. Download regular backups.
-Do NOT store card numbers, CVV codes, bank passwords or login credentials.
-
-EMAIL
-V1 prepares the invoice email using your device's email program. It does not silently send email itself and does not store an email password.
-
-INSTALL
-Upload these files to a NEW GitHub repository and enable GitHub Pages. Open its HTTPS Pages address in Chrome/Edge and use Install App when offered.
+Keep V1 ZIP as your backup. Before upgrading a live V1 installation, use V1's Download Backup button.

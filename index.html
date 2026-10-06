@@ -14,7 +14,7 @@
 <button data-page="records">Customers & Businesses</button>
 <button data-page="payments">Payments</button>
 <button data-page="invoices">Invoices</button>
-<button data-page="backup">Backup</button>
+<button data-page="reports">Reports</button><button data-page="backup">Backup</button>
 </nav>
 <main>
 <section id="dashboard" class="page active">
@@ -23,7 +23,7 @@
 <div><b id="sActive">0</b><span>Active Listings</span></div>
 <div><b id="sDue">£0.00</b><span>Outstanding</span></div>
 <div><b id="sOverdue">0</b><span>Overdue</span></div></div>
-<h3>Upcoming / overdue listings</h3><div id="dueList" class="tablewrap"></div>
+<div id="renewalAlert" class="renewal"></div><h3>Upcoming / overdue listings</h3><div id="dueList" class="tablewrap"></div>
 </section>
 
 <section id="records" class="page">
@@ -80,13 +80,23 @@
 <div id="printArea"></div>
 </section>
 
-<section id="backup" class="page">
+<section id="reports" class="page">
+<h2>Revenue & Listing Reports</h2>
+<div class="stats">
+<div><b id="rPaid">£0.00</b><span>Total Paid</span></div>
+<div><b id="rPending">£0.00</b><span>Pending Payments</span></div>
+<div><b id="rThisMonth">£0.00</b><span>Paid This Month</span></div>
+<div><b id="rThisYear">£0.00</b><span>Paid This Year</span></div>
+</div>
+<h3>Monthly revenue</h3><div id="monthlyReport" class="tablewrap"></div>
+<h3>Listing status</h3><div id="statusReport" class="tablewrap"></div>
+</section><section id="backup" class="page">
 <h2>Backup & Restore</h2>
 <p>All records are stored on this device. Make regular backups, especially before changing computers.</p>
 <div class="backupBtns"><button id="exportBackup">Download Backup</button><label class="fileBtn">Restore Backup<input id="importBackup" type="file" accept=".json"></label></div>
 <h3>Important payment security</h3><p>This app records payment status, method, amount and reference only. Do not enter card numbers, CVV codes, bank passwords or other sensitive payment credentials.</p>
 </section>
 </main>
-<footer>Elevore360D Listing Manager V1 • Private owner administration app</footer>
+<footer>Elevore360D Listing Manager V2 • Private owner administration app</footer>
 <script src="app.js"></script><script src="install.js"></script>
 </body></html>

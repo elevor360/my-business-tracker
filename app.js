@@ -3,8 +3,13 @@ let db=JSON.parse(localStorage.getItem(KEY)||'null')||{records:[],payments:[],in
 const $=s=>document.querySelector(s); const money=n=>'£'+Number(n||0).toFixed(2);
 function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.page').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.page).classList.add('active')});
-function renderAll(){renderRecords();renderPayments();renderInvoices();renderDashboard();fillSelects()}
+function renderAll(){renderRecords();renderPayments();renderInvoices();renderDashboard();renderReports();fillSelects()}
 function renderDashboard(){
+ const today0=new Date(); const soon=new Date(today0); soon.setDate(soon.getDate()+30);
+ const t0=today0.toISOString().slice(0,10), t30=soon.toISOString().slice(0,10);
+ const renewals=db.records.filter(r=>r.renewalDate&&r.renewalDate>=t0&&r.renewalDate<=t30&&r.listingStatus==='Active').length;
+ const expired=db.records.filter(r=>r.renewalDate&&r.renewalDate<t0&&r.listingStatus==='Active').length;
+ $('#renewalAlert').innerHTML=(renewals||expired)?`<b>Listing reminders:</b> ${renewals} renewal(s) due in the next 30 days · ${expired} active listing(s) past their renewal/expiry date.`:'No listing renewals due in the next 30 days.';
  $('#sBusinesses').textContent=db.records.length;$('#sActive').textContent=db.records.filter(r=>r.listingStatus==='Active').length;
  const paidBy=id=>db.payments.filter(p=>p.recordId===id&&p.status==='Paid').reduce((a,p)=>a+Number(p.amount),0);
  let outstanding=0,overdue=0; const today=new Date().toISOString().slice(0,10);
@@ -29,12 +34,28 @@ function fillSelects(){const opts=db.records.map(r=>`<option value="${r.id}">${e
 function renderPayments(){$('#paymentTable').innerHTML=db.payments.length?`<table><tr><th>Date</th><th>Business</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th></tr>${[...db.payments].reverse().map(p=>{let r=db.records.find(x=>x.id===p.recordId);return `<tr><td>${p.date}</td><td>${esc(r?.businessName||'Deleted')}</td><td>${money(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.reference)}</td><td>${esc(p.status)}</td></tr>`}).join('')}</table>`:'No payments recorded.'}
 $('#addPayment').onclick=()=>{if(!db.records.length)return alert('Add a business first.');$('#payDate').value=new Date().toISOString().slice(0,10);$('#paymentDialog').showModal()};
 $('#paymentForm').onsubmit=e=>{if(e.submitter?.value==='cancel')return;db.payments.push({id:crypto.randomUUID(),recordId:$('#payBusiness').value,amount:$('#payAmount').value,date:$('#payDate').value,method:$('#payMethod').value,reference:$('#payReference').value,status:$('#payStatus').value});save()};
-function renderInvoices(){$('#invoiceTable').innerHTML=db.invoices.length?`<table><tr><th>Invoice</th><th>Business</th><th>Date</th><th>Due</th><th>Amount</th><th>Actions</th></tr>${[...db.invoices].reverse().map(i=>{let r=db.records.find(x=>x.id===i.recordId);return `<tr><td>${i.number}</td><td>${esc(r?.businessName||'Deleted')}</td><td>${i.date}</td><td>${i.due}</td><td>${money(i.amount)}</td><td><button onclick="printInvoice('${i.id}')">Print</button> <button onclick="emailInvoice('${i.id}')">Email</button></td></tr>`}).join('')}</table>`:'No invoices created.'}
+function invoiceStatus(i){if(i.status==='Paid')return 'Paid';const t=new Date().toISOString().slice(0,10);return i.due&&i.due<t?'Overdue':'Unpaid'}
+function renderInvoices(){$('#invoiceTable').innerHTML=db.invoices.length?`<table><tr><th>Invoice</th><th>Business</th><th>Date</th><th>Due</th><th>Amount</th><th>Status</th><th>Actions</th></tr>${[...db.invoices].reverse().map(i=>{let r=db.records.find(x=>x.id===i.recordId),s=invoiceStatus(i);return `<tr><td>${i.number}</td><td>${esc(r?.businessName||'Deleted')}</td><td>${i.date}</td><td>${i.due}</td><td>${money(i.amount)}</td><td><b>${s}</b></td><td><button onclick="printInvoice('${i.id}')">Print/PDF</button> <button onclick="emailInvoice('${i.id}')">Email</button> ${s!=='Paid'?`<button onclick="markInvoicePaid('${i.id}')">Mark Paid</button>`:''}</td></tr>`}).join('')}</table>`:'No invoices created.'}
+window.markInvoicePaid=id=>{const i=db.invoices.find(x=>x.id===id);if(!i)return;i.status='Paid';i.paidDate=new Date().toISOString().slice(0,10);if(!db.payments.some(p=>p.invoiceId===id)){db.payments.push({id:crypto.randomUUID(),invoiceId:id,recordId:i.recordId,amount:i.amount,date:i.paidDate,method:'Invoice payment',reference:i.number,status:'Paid'})}save()}
 $('#newInvoice').onclick=()=>{if(!db.records.length)return alert('Add a business first.');let r=db.records[0];$('#invBusiness').value=r.id;$('#invAmount').value=r.listingPrice||'';let d=new Date();$('#invDate').value=d.toISOString().slice(0,10);d.setDate(d.getDate()+14);$('#invDue').value=d.toISOString().slice(0,10);$('#invoiceDialog').showModal()};
 $('#invBusiness').onchange=()=>{let r=db.records.find(x=>x.id===$('#invBusiness').value);if(r)$('#invAmount').value=r.listingPrice||''};
-$('#invoiceForm').onsubmit=e=>{if(e.submitter?.value==='cancel')return;db.invoices.push({id:crypto.randomUUID(),number:'E360-'+db.nextInvoice++,recordId:$('#invBusiness').value,description:$('#invDescription').value,amount:$('#invAmount').value,date:$('#invDate').value,due:$('#invDue').value});save()};
+$('#invoiceForm').onsubmit=e=>{if(e.submitter?.value==='cancel')return;db.invoices.push({id:crypto.randomUUID(),number:'E360-'+db.nextInvoice++,recordId:$('#invBusiness').value,description:$('#invDescription').value,amount:$('#invAmount').value,date:$('#invDate').value,due:$('#invDue').value,status:'Unpaid'});save()};
 window.printInvoice=id=>{const i=db.invoices.find(x=>x.id===id),r=db.records.find(x=>x.id===i.recordId);$('#printArea').innerHTML=`<div><h1>Elevore360D</h1><h2>INVOICE ${i.number}</h2><p><b>Invoice date:</b> ${i.date}<br><b>Due date:</b> ${i.due}</p><hr><h3>Bill to</h3><p>${esc(r?.businessName)}<br>${esc(r?.contactName)}<br>${esc(r?.address).replace(/\n/g,'<br>')}<br>${esc(r?.email)}</p><table><tr><th>Description</th><th>Amount</th></tr><tr><td>${esc(i.description)}</td><td>${money(i.amount)}</td></tr></table><h2>Total: ${money(i.amount)}</h2><p>Thank you for listing with Elevore360D Local Deals.</p></div>`;window.print()};
 window.emailInvoice=id=>{const i=db.invoices.find(x=>x.id===id),r=db.records.find(x=>x.id===i.recordId);const subject=encodeURIComponent(`Elevore360D Invoice ${i.number}`),body=encodeURIComponent(`Hello ${r?.contactName||''},\n\nPlease find your Elevore360D Local Deals listing invoice details below.\n\nInvoice: ${i.number}\nDescription: ${i.description}\nAmount: ${money(i.amount)}\nInvoice date: ${i.date}\nDue date: ${i.due}\n\nThank you,\nElevore360D`);location.href=`mailto:${encodeURIComponent(r?.email||'')}?subject=${subject}&body=${body}`};
 $('#exportBackup').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download=`elevore360d-listing-manager-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href)};
 $('#importBackup').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!d.records||!d.payments||!d.invoices)throw 0;if(confirm('Replace current data with this backup?')){db=d;save()}}catch{alert('That is not a valid Listing Manager backup.')}};
+
+function renderReports(){
+ const paid=db.payments.filter(p=>p.status==='Paid'), pending=db.payments.filter(p=>p.status==='Pending');
+ const now=new Date(), ym=now.toISOString().slice(0,7), yy=String(now.getFullYear());
+ const sum=x=>x.reduce((n,p)=>n+Number(p.amount||0),0);
+ $('#rPaid').textContent=money(sum(paid));$('#rPending').textContent=money(sum(pending));
+ $('#rThisMonth').textContent=money(sum(paid.filter(p=>(p.date||'').startsWith(ym))));
+ $('#rThisYear').textContent=money(sum(paid.filter(p=>(p.date||'').startsWith(yy))));
+ const months={};paid.forEach(p=>{let m=(p.date||'Unknown').slice(0,7);months[m]=(months[m]||0)+Number(p.amount||0)});
+ $('#monthlyReport').innerHTML=Object.keys(months).length?`<table><tr><th>Month</th><th>Revenue</th></tr>${Object.keys(months).sort().reverse().map(m=>`<tr><td>${m}</td><td>${money(months[m])}</td></tr>`).join('')}</table>`:'No paid revenue yet.';
+ const counts={};db.records.forEach(r=>counts[r.listingStatus]=(counts[r.listingStatus]||0)+1);
+ $('#statusReport').innerHTML=`<table><tr><th>Status</th><th>Listings</th></tr>${['Active','Pending','Expired','Cancelled'].map(s=>`<tr><td>${s}</td><td>${counts[s]||0}</td></tr>`).join('')}</table>`;
+}
+
 blankRecord();renderAll();
